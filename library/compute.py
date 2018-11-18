@@ -34,9 +34,9 @@ def silhouette(em_2d, labels):
 
 
 # normalize by span to [0, 1]
-def normalize(arr):
-    minimum = np.min(arr, axis=0)
-    span = np.max(arr, axis=0) - minimum
+def normalize(arr, axis=None):
+    minimum = np.min(arr, axis=axis)
+    span = np.max(arr, axis=axis) - minimum
     return (arr - minimum) / span
 
 
@@ -77,7 +77,17 @@ def get_sizes(image_size, em_2d, centers, labels, representative, silhouettes):
 
 
 def get_positions(em_2d, canvas_size):
-    return normalize(em_2d) * canvas_size
+    return normalize(em_2d, axis=0) * canvas_size
+
+
+def get_distances(mat):
+    return normalize(squareform(pdist(mat)))
+
+
+def compare_distances(dists1, dists2):
+    d = np.abs(dists1 - dists2)
+    print('\n mean, max:', np.mean(d), np.max(d))
+    return np.sum(d)
 
 
 def corners(p, s):
