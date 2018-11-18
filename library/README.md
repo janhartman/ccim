@@ -16,6 +16,14 @@ The aims of the algorithm:
 - expand until there are no more overlaps
 - shrink towards cluster centers with "gravity" to remove blank space, but do not cause overlaps
 
+- intra-cluster shrinking: start with biggest
+- inter-cluster shrinking: go over all alphas to make sure clusters are moved by same factor
+
+- scoring: MDS has perfect score, so does scaled MDS
+- when shrinking, try to get as close as possible (first, just print them out)
+- score using distance matrices (try more different functions)
+
+- sparseness parameter determining how much empty space we will have
 
 ## Idea 2
 - iteratively place images (representative first)

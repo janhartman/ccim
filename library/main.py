@@ -1,8 +1,8 @@
 import helper
 import compute
 
-
-def main(k=4, image_size=100, canvas_size=500):
+# TODO sparseness
+def main(k=4, image_size=200, canvas_size=500):
     # Load images and get embeddings from NN
     imgs = helper.get_images(1)
     embeddings = helper.get_embeddings(imgs)
@@ -18,14 +18,11 @@ def main(k=4, image_size=100, canvas_size=500):
     # K representative images
     representative = compute.get_representative(em_2d, cluster_centers, cluster_labels, silhouettes)
 
-    # TODO: is this right? the top K biggest silhouettes won't necessary be in different clusters
     # Sizes and positions of the images
-    sizes = compute.get_sizes(silhouettes, image_size)
+    sizes = compute.get_sizes(image_size, em_2d, cluster_centers, cluster_labels, representative, silhouettes)
     positions = compute.get_positions(em_2d, canvas_size - image_size)
 
-    # helper.plot_clusters(em_2d, cluster_centers, cluster_labels, representative)
-
-    # helper.plot(imgs, positions, sizes, canvas_size)  # overlap
+    # helper.plot(imgs, positions, sizes, representative, canvas_size)  # overlap
 
     # Expand as long as overlaps occur
     iters = 0
@@ -36,17 +33,18 @@ def main(k=4, image_size=100, canvas_size=500):
 
     print('overlap', iters)
 
-    # helper.plot(imgs, positions, sizes, canvas_size)
+    # helper.plot(imgs, positions, sizes, representative, canvas_size)
 
     # Overlapping resolved, now "shrink" towards representative images
     positions = compute.shrink_intra(positions, sizes, representative, cluster_labels, image_size)
 
-    # helper.plot(imgs, positions, sizes, canvas_size)
+    helper.plot(imgs, positions, sizes, representative, canvas_size)
 
     # Move clusters closer together
     positions, canvas_size = compute.shrink_inter(positions, sizes, representative, cluster_labels, image_size)
 
-    helper.plot(imgs, positions, sizes, canvas_size)
+    helper.plot(imgs, positions, sizes, representative, canvas_size)
+    # helper.plot_clusters(em_2d, cluster_centers, cluster_labels, representative)
 
 
 if __name__ == '__main__':

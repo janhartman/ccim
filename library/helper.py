@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from PIL import Image
+from PIL import Image, ImageOps
 from orangecontrib.imageanalytics.image_embedder import ImageEmbedder
 
 datasets = {
@@ -35,13 +35,15 @@ def plot_clusters(em_2d, cluster_centers, cluster_labels, rep):
     plt.show()
 
 
-def plot(image_file_paths, positions, sizes, canvas_size):
+def plot(image_file_paths, positions, sizes, representative, canvas_size):
     canvas_size = int(canvas_size)
     vis = Image.new('RGB', (canvas_size, canvas_size), (255, 255, 255))
 
-    for image_file_name, pos, size in zip(image_file_paths, positions, sizes):
-        size = int(max(size, max(5, size)))
+    for image_file_name, pos, size, i in zip(image_file_paths, positions, sizes, range(len(sizes))):
+        size = int(size)
         image = Image.open(image_file_name)
+        if i in representative:
+            image = ImageOps.expand(image, border=5, fill=100)
         image.thumbnail((size, size))
         vis.paste(image, (int(pos[0]), int(pos[1])))
 

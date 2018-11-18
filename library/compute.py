@@ -24,7 +24,6 @@ def umap(embeddings):
     return UMAP().fit_transform(embeddings)
 
 
-# TODO distance - cosine?
 def k_means(em_2d, k):
     km = KMeans(n_clusters=k).fit(em_2d)
     return km.cluster_centers_, km.labels_
@@ -34,31 +33,51 @@ def silhouette(em_2d, labels):
     return silhouette_samples(em_2d, labels)
 
 
-# normalize by span
+# normalize by span to [0, 1]
 def normalize(arr):
-    min_arr = np.min(arr, axis=0)
-    span = np.max(arr, axis=0) - min_arr
-    return (arr - min_arr) / span
-
-
-# TODO use representative images?
-def get_sizes(s, image_size):
-    n = normalize(s)
-    return np.clip(n * image_size, image_size / 5, None)
-
-
-def get_positions(em_2d, canvas_size):
-    return normalize(em_2d) * canvas_size
+    minimum = np.min(arr, axis=0)
+    span = np.max(arr, axis=0) - minimum
+    return (arr - minimum) / span
 
 
 # choose either the closest to the center or largest silhouettes
 def get_representative(em_2d, centers, labels, silhouettes):
     # closest to the centers
-    # rep = [np.linalg.norm(em_2d - center, axis=1).argmin() for center in centers]
+    rep = [np.linalg.norm(em_2d - center, axis=1).argmin() for center in centers]
 
-    # largest silhouette
-    rep = [int(i[0]) for i in[np.where(silhouettes == np.max(silhouettes[np.where(labels == label)])) for label in range(len(centers))]]
+    # largest silhouette in cluster
+    # rep = [int(i[0]) for i in [np.where(silhouettes == np.max(silhouettes[np.where(labels == label)]))
+    #                            for label in range(len(centers))]]
     return rep
+
+
+# choose either centroid proximity or silhoettes
+def get_sizes(image_size, em_2d, centers, labels, representative, silhouettes):
+    # cluster center proximity - this only works with representative images being the closest to centers
+    sizes = np.zeros(labels.shape)
+
+    for label, center in enumerate(centers):
+        cluster_indices = np.where(labels == label)
+        cluster = em_2d[cluster_indices]
+        norm = 1 / np.linalg.norm(cluster - center, axis=1)
+        sizes[cluster_indices] = norm / np.max(norm)
+
+    # decrease sizes above a limit to make sure we only have k big images
+    sizes[np.where(sizes > 0.65)] /= 1.25
+    sizes[representative] = 1
+
+    # use silhouettes in a straightforward way
+    # not the best option because there can be more "big" images per cluster
+    # sizes = silhouettes
+
+    sizes **= 2
+    sizes = np.clip(sizes * image_size, image_size / 5, None)
+
+    return sizes
+
+
+def get_positions(em_2d, canvas_size):
+    return normalize(em_2d) * canvas_size
 
 
 def corners(p, s):
@@ -70,6 +89,7 @@ def check_corners(c2, x1, y1, s1):
     for x2, y2 in c2:
         if x1 <= x2 <= x1 + s1 and y1 <= y2 <= y1 + s1:
             return True
+    return False
 
 
 def overlap(positions, sizes):
@@ -88,6 +108,16 @@ def overlap(positions, sizes):
 # Intra-cluster shrinking
 # For each image, set it as close to the representative for that cluster as possible without overlapping
 def shrink_intra(positions, sizes, representative, labels, image_size):
+    # make sure we start with biggest
+    sort_indices = np.argsort(sizes)[::-1]
+    reverse_sort_indices = np.argsort(sort_indices)
+
+    # temporarily sort everything descending by size, unsort positions when returning
+    positions = positions[sort_indices]
+    sizes = sizes[sort_indices]
+    labels = labels[sort_indices]
+    representative = reverse_sort_indices[representative]
+
     for i, pos in enumerate(positions):
         rep_idx = representative[labels[i]]
         rep_pos = positions[rep_idx]
@@ -99,32 +129,61 @@ def shrink_intra(positions, sizes, representative, labels, image_size):
         new_positions = copy(positions)
         new_pos = pos
 
-        for alpha in np.linspace(0.95, 0.0, 20):
+        for alpha in np.linspace(0.99, 0.0, 100):
             new_pos = pos - alpha * (pos - rep_pos)
             new_positions[i] = new_pos
 
             if not overlap(new_positions[cluster_indices], sizes[cluster_indices]):
-                print(i, alpha)
+                print('intra', i, alpha)
                 break
 
         positions[i] = new_pos
 
-    return positions
+    return positions[reverse_sort_indices]
 
 
 # Inter-cluster shrinking
 # For each cluster, move it to closer to the center of all images
 def shrink_inter(positions, sizes, representative, labels, image_size):
     mean = np.mean(positions, axis=0)
+    new_positions = positions
 
-    for i, rep_idx in enumerate(representative):
+    # Try to move all clusters by the same factor
+    for alpha in np.linspace(0.99, 0.0, 100):
+        new_positions = copy(positions)
+
+        for label, rep_idx in enumerate(representative):
+            rep_pos = positions[rep_idx]
+            cluster_indices = np.where(labels == label)
+            pos = positions[cluster_indices]
+            new_pos = pos - alpha * (rep_pos - mean)
+            new_positions[cluster_indices] = new_pos
+
+        if not overlap(new_positions, sizes):
+            print('inter #1', alpha)
+            break
+
+    positions = new_positions
+
+    # Try to move clusters closer separately
+    for label, rep_idx in enumerate(representative):
         rep_pos = positions[rep_idx]
-        cluster_indices = np.where(labels == i)
+        cluster_indices = np.where(labels == label)
         pos = positions[cluster_indices]
-        pos -= 0.65 * (rep_pos - mean)
-        positions[cluster_indices] = pos
 
-    positions -= np.min(positions, axis=0)
-    canvas_size = np.max(positions) + image_size
+        new_pos = pos
+        new_positions = copy(positions)
+        for alpha in np.linspace(0.99, 0.0, 100):
+            new_pos = pos - alpha * (rep_pos - mean)
+            new_positions[cluster_indices] = new_pos
+
+            if not overlap(new_positions, sizes):
+                print('inter #2', label, alpha)
+                break
+
+        positions[cluster_indices] = new_pos
+
+    positions -= np.min(positions, axis=0) - 10
+    canvas_size = np.max(positions) + image_size + 10
 
     return positions, canvas_size
