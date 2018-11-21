@@ -1,9 +1,10 @@
 import helper
 import compute
 
+import numpy as np
 
 # TODO sparseness
-def main(k=4, image_size=200, canvas_size=500):
+def main(k=4, image_size=200, canvas_size=500, sparseness=0.5):
     # Load images and get embeddings from NN
     imgs = helper.get_images(1)
     embeddings = helper.get_embeddings(imgs)
@@ -24,7 +25,6 @@ def main(k=4, image_size=200, canvas_size=500):
     positions = compute.get_positions(em_2d, canvas_size - image_size)
 
     # helper.plot(imgs, positions, sizes, representative, canvas_size)  # overlap
-    dists1 = compute.get_distances(positions)
 
     # Expand as long as overlaps occur
     iters = 0
@@ -36,25 +36,36 @@ def main(k=4, image_size=200, canvas_size=500):
     print('overlap', iters)
 
     # helper.plot(imgs, positions, sizes, representative, canvas_size)
-    dists2 = compute.get_distances(positions)
+    dists1 = compute.get_distances(positions)
 
     # Overlapping resolved, now "shrink" towards representative images
     positions = compute.shrink_intra(positions, sizes, representative, cluster_labels, image_size)
-
-    dists3 = compute.get_distances(positions)
+    dists2 = compute.get_distances(positions)
+    positions, canvas_size = compute.reset_pos_canvas(positions, sizes)
 
     # helper.plot(imgs, positions, sizes, representative, canvas_size)
 
     # Move clusters closer together
-    positions, canvas_size = compute.shrink_inter(positions, sizes, representative, cluster_labels, image_size)
+    positions = compute.shrink_inter(positions, sizes, representative, cluster_labels, image_size)
+    dists3 = compute.get_distances(positions)
+    positions, canvas_size = compute.reset_pos_canvas(positions, sizes)
 
+    helper.plot(imgs, positions, sizes, representative, canvas_size)
+
+
+    positions = compute.shrink_with_sparseness(positions, sizes, representative, cluster_labels, image_size, sparseness)
     dists4 = compute.get_distances(positions)
+    positions, canvas_size = compute.reset_pos_canvas(positions, sizes)
+
+    helper.plot(imgs, positions, sizes, representative, canvas_size)
+
     print('dists 2 to 1:', compute.compare_distances(dists2, dists1))
+    print('dists 3 to 1:', compute.compare_distances(dists3, dists1))
+    print('dists 4 to 1:', compute.compare_distances(dists4, dists1))
     print('dists 3 to 2:', compute.compare_distances(dists3, dists2))
     print('dists 4 to 2:', compute.compare_distances(dists4, dists2))
     print('dists 4 to 3:', compute.compare_distances(dists4, dists3))
 
-    # helper.plot(imgs, positions, sizes, representative, canvas_size)
     # helper.plot_clusters(em_2d, cluster_centers, cluster_labels, representative)
 
 

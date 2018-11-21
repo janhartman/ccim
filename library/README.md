@@ -19,11 +19,17 @@ The aims of the algorithm:
 - intra-cluster shrinking: start with biggest
 - inter-cluster shrinking: go over all alphas to make sure clusters are moved by same factor
 
+- sizing: use ranking (bring down higher sizes with 1/x to some power)
+
 - scoring: MDS has perfect score, so does scaled MDS
 - when shrinking, try to get as close as possible (first, just print them out)
 - score using distance matrices (try more different functions)
 
 - sparseness parameter determining how much empty space we will have
+- randomly move images closer to the mean by that parameter (e.g. 10% - move by that percentage)
+
+- local or global scoring (depends on starting method: MDS/tSNE)
+- absolute or square?
 
 ## Idea 2
 - iteratively place images (representative first)

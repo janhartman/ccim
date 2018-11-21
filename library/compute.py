@@ -59,18 +59,18 @@ def get_sizes(image_size, em_2d, centers, labels, representative, silhouettes):
     for label, center in enumerate(centers):
         cluster_indices = np.where(labels == label)
         cluster = em_2d[cluster_indices]
-        norm = 1 / np.linalg.norm(cluster - center, axis=1)
+        norm = np.linalg.norm(cluster - center, axis=1)
         sizes[cluster_indices] = norm / np.max(norm)
 
     # decrease sizes above a limit to make sure we only have k big images
-    sizes[np.where(sizes > 0.65)] /= 1.25
+    print(sizes)
+    sizes = 1 / sizes
+    print(sizes)
+    sizes /= np.max(sizes)
+    print(sizes)
+    sizes **= 0.75
+    print(sizes)
     sizes[representative] = 1
-
-    # use silhouettes in a straightforward way
-    # not the best option because there can be more "big" images per cluster
-    # sizes = silhouettes
-
-    sizes **= 2
     sizes = np.clip(sizes * image_size, image_size / 5, None)
 
     return sizes
@@ -85,8 +85,8 @@ def get_distances(mat):
 
 
 def compare_distances(dists1, dists2):
-    d = np.abs(dists1 - dists2)
-    print('\n mean, max:', np.mean(d), np.max(d))
+    d = np.square(dists1 - dists2)
+    # print('\nmean, max:', np.mean(d), np.max(d))
     return np.sum(d)
 
 
@@ -113,6 +113,13 @@ def overlap(positions, sizes):
                 return True
 
     return False
+
+
+def reset_pos_canvas(positions, sizes):
+    positions -= np.min(positions, axis=0)
+    canvas_size = np.max(positions + sizes.reshape((len(positions), 1)))
+
+    return positions, canvas_size
 
 
 # Intra-cluster shrinking
@@ -144,7 +151,7 @@ def shrink_intra(positions, sizes, representative, labels, image_size):
             new_positions[i] = new_pos
 
             if not overlap(new_positions[cluster_indices], sizes[cluster_indices]):
-                print('intra', i, alpha)
+                # print('intra', i, alpha)
                 break
 
         positions[i] = new_pos
@@ -193,7 +200,29 @@ def shrink_inter(positions, sizes, representative, labels, image_size):
 
         positions[cluster_indices] = new_pos
 
-    positions -= np.min(positions, axis=0) - 10
-    canvas_size = np.max(positions) + image_size + 10
+    return positions
 
-    return positions, canvas_size
+
+def shrink_with_sparseness(positions, sizes, representative, cluster_labels, image_size, sparseness):
+    mean = np.mean(positions, axis=0)
+    sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
+    denseness = 1 - sparseness
+
+    # randomly choose elements
+    for i in sort_indices:
+        pos = copy(positions[i])
+
+        print(i, np.linalg.norm(pos - mean))
+
+        for alpha in np.linspace(denseness, 0.0, int(denseness * 100) - 1):
+            new_pos = pos - alpha * (pos - mean)
+
+            positions[i] = new_pos
+
+            if not overlap(positions, sizes):
+                print('moved', i, 'by', round(alpha, 3))
+                break
+            else:
+                positions[i] = pos
+
+    return positions

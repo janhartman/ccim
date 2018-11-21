@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageDraw
 from orangecontrib.imageanalytics.image_embedder import ImageEmbedder
 
 datasets = {
@@ -35,16 +35,23 @@ def plot_clusters(em_2d, cluster_centers, cluster_labels, rep):
     plt.show()
 
 
-def plot(image_file_paths, positions, sizes, representative, canvas_size):
-    canvas_size = int(canvas_size)
+def plot(image_file_paths, positions, sizes, representative, canvas_size, border=10):
+    canvas_size = int(canvas_size) + 2 * border
     vis = Image.new('RGB', (canvas_size, canvas_size), (255, 255, 255))
+    draw = ImageDraw.Draw(vis)
 
-    for image_file_name, pos, size, i in zip(image_file_paths, positions, sizes, range(len(sizes))):
+    for image_file_name, pos, size, i in zip(image_file_paths, positions + border, sizes, range(len(sizes))):
         size = int(size)
         image = Image.open(image_file_name)
-        if i in representative:
-            image = ImageOps.expand(image, border=5, fill=100)
+        # if i in representative:
+        #     image = ImageOps.expand(image, border=5, fill=100)
         image.thumbnail((size, size))
+        r = [pos[0], pos[1], pos[0] + size, pos[1] + size]
+        draw.rectangle(r, fill=(255, 255, 255, 255), outline=(0, 0, 0))
         vis.paste(image, (int(pos[0]), int(pos[1])))
+
+    x, y = np.mean(positions, axis=0)
+    r = [int(x), int(y), int(x) + 5, int(y)+5]
+    draw.rectangle(r, fill=(255, 0, 0))
 
     vis.show()
