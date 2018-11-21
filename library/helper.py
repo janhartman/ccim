@@ -43,15 +43,19 @@ def plot(image_file_paths, positions, sizes, representative, canvas_size, border
     for image_file_name, pos, size, i in zip(image_file_paths, positions + border, sizes, range(len(sizes))):
         size = int(size)
         image = Image.open(image_file_name)
+
         # if i in representative:
         #     image = ImageOps.expand(image, border=5, fill=100)
+
         image.thumbnail((size, size))
+
         r = [pos[0], pos[1], pos[0] + size, pos[1] + size]
         draw.rectangle(r, fill=(255, 255, 255, 255), outline=(0, 0, 0))
+
         vis.paste(image, (int(pos[0]), int(pos[1])))
 
-    x, y = np.mean(positions, axis=0)
-    r = [int(x), int(y), int(x) + 5, int(y)+5]
-    draw.rectangle(r, fill=(255, 0, 0))
+    # x, y = np.mean(positions, axis=0)
+    # r = [int(x), int(y), int(x) + 5, int(y)+5]
+    # draw.rectangle(r, fill=(255, 0, 0))
 
     vis.show()

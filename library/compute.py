@@ -63,13 +63,9 @@ def get_sizes(image_size, em_2d, centers, labels, representative, silhouettes):
         sizes[cluster_indices] = norm / np.max(norm)
 
     # decrease sizes above a limit to make sure we only have k big images
-    print(sizes)
     sizes = 1 / sizes
-    print(sizes)
     sizes /= np.max(sizes)
-    print(sizes)
     sizes **= 0.75
-    print(sizes)
     sizes[representative] = 1
     sizes = np.clip(sizes * image_size, image_size / 5, None)
 
@@ -161,7 +157,7 @@ def shrink_intra(positions, sizes, representative, labels, image_size):
 
 # Inter-cluster shrinking
 # For each cluster, move it to closer to the center of all images
-def shrink_inter(positions, sizes, representative, labels, image_size):
+def shrink_inter1(positions, sizes, representative, labels, image_size):
     mean = np.mean(positions, axis=0)
     new_positions = positions
 
@@ -180,7 +176,11 @@ def shrink_inter(positions, sizes, representative, labels, image_size):
             print('inter #1', alpha)
             break
 
-    positions = new_positions
+    return new_positions
+
+
+def shrink_inter2(positions, sizes, representative, labels, image_size):
+    mean = np.mean(positions, axis=0)
 
     # Try to move clusters closer separately
     for label, rep_idx in enumerate(representative):
@@ -206,13 +206,14 @@ def shrink_inter(positions, sizes, representative, labels, image_size):
 def shrink_with_sparseness(positions, sizes, representative, cluster_labels, image_size, sparseness):
     mean = np.mean(positions, axis=0)
     sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
+
     denseness = 1 - sparseness
+    if denseness == 0.0:
+        return positions
 
     # randomly choose elements
     for i in sort_indices:
         pos = copy(positions[i])
-
-        print(i, np.linalg.norm(pos - mean))
 
         for alpha in np.linspace(denseness, 0.0, int(denseness * 100) - 1):
             new_pos = pos - alpha * (pos - mean)
