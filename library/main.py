@@ -3,7 +3,7 @@ import compute
 
 import numpy as np
 
-def main(k=4, image_size=200, sparseness=0.5, dataset_number=2):
+def main(k=4, image_size=200, sparseness=0.5, dataset_number=5):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
@@ -21,7 +21,8 @@ def main(k=4, image_size=200, sparseness=0.5, dataset_number=2):
     representative = compute.get_representative(em_2d, cluster_centers, cluster_labels, silhouettes)
 
     # Sizes and positions of the images
-    sizes = compute.get_sizes(image_size, em_2d, cluster_centers, cluster_labels, representative)
+    ratios = helper.get_image_size_ratios(imgs)
+    sizes = compute.get_sizes(image_size, em_2d, ratios, cluster_centers, cluster_labels, representative)
     positions = compute.get_positions(em_2d, image_size)
 
     # helper.plot_clusters(em_2d, cluster_centers, cluster_labels, representative)

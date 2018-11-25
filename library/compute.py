@@ -52,7 +52,7 @@ def get_representative(em_2d, centers, labels, silhouettes):
 
 
 # choose either centroid proximity or silhoettes
-def get_sizes(image_size, em_2d, centers, labels, representative):
+def get_sizes(image_size, em_2d, ratios, centers, labels, representative):
     # cluster center proximity - this only works with representative images being the closest to centers
     sizes = np.zeros(labels.shape)
 
@@ -68,10 +68,9 @@ def get_sizes(image_size, em_2d, centers, labels, representative):
     sizes **= 0.75
     sizes[representative] = 1
 
-    # TODO sizes for both x and y
+    # TODO: do we want the minimum or maximum dimension to be the specified size?
+    sizes = np.stack((sizes, sizes / ratios), 1)
     sizes = np.clip(sizes * image_size, image_size / 5, None)
-    sizes = sizes.reshape((len(sizes), 1))
-    sizes = np.hstack((sizes, sizes))
 
     return sizes
 

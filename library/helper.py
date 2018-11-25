@@ -33,6 +33,15 @@ def get_embeddings(dataset_number, image_file_paths):
         return embeddings
 
 
+def get_image_size_ratios(image_file_paths):
+    ratios = np.zeros((len(image_file_paths), ))
+    for i, image_file_name in enumerate(image_file_paths):
+        image = Image.open(image_file_name)
+        ratios[i] = image.size[0] / image.size[1]
+        image.close()
+    return ratios
+
+
 def plot_clusters(em_2d, cluster_centers, cluster_labels, rep):
     plt.scatter(em_2d[:, 0], em_2d[:, 1], c=cluster_labels, s=50, cmap='viridis')
     plt.scatter(cluster_centers[:, 0], cluster_centers[:, 1], c='black', s=200, alpha=0.3)
@@ -54,7 +63,8 @@ def plot(image_file_paths, positions, sizes, border=10):
         image.thumbnail(tuple(size.astype(np.int32)))
         vis.paste(image, (int(pos[0]), int(pos[1])))
 
-        r = [pos[0], pos[1], pos[0] + size[0], pos[1] + size[1]]
-        draw.rectangle(r, outline=(0, 0, 0))
+        # r = [pos[0], pos[1], pos[0] + size[0], pos[1] + size[1]]
+        # draw.rectangle(r, outline=(0, 0, 0))
+        image.close()
 
     vis.show()
