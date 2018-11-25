@@ -52,7 +52,7 @@ def get_representative(em_2d, centers, labels, silhouettes):
 
 
 # choose either centroid proximity or silhoettes
-def get_sizes(image_size, em_2d, centers, labels, representative, silhouettes):
+def get_sizes(image_size, em_2d, centers, labels, representative):
     # cluster center proximity - this only works with representative images being the closest to centers
     sizes = np.zeros(labels.shape)
 
@@ -67,13 +67,18 @@ def get_sizes(image_size, em_2d, centers, labels, representative, silhouettes):
     sizes /= np.max(sizes)
     sizes **= 0.75
     sizes[representative] = 1
+
+    # TODO sizes for both x and y
     sizes = np.clip(sizes * image_size, image_size / 5, None)
+    sizes = sizes.reshape((len(sizes), 1))
+    sizes = np.hstack((sizes, sizes))
 
     return sizes
 
 
-def get_positions(em_2d, canvas_size):
-    return normalize(em_2d, axis=0) * canvas_size
+# assume sqrt(n) * sqrt(n) placement - doesn't really matter since it will be resolved with expanding
+def get_positions(em_2d, image_size):
+    return normalize(em_2d, axis=0) * np.sqrt(len(em_2d)) * image_size
 
 
 def get_distances(mat):
@@ -86,43 +91,36 @@ def compare_distances(dists1, dists2):
     return np.sum(d)
 
 
-def corners(p, s):
-    x, y = p
-    return [(x, y), (x + s, y), (x, y + s), (x + s, y + s)]
+def corners(x, y, sx, sy):
+    return [(x, y), (x + sx, y), (x, y + sy), (x + sx, y + sy)]
 
 
-def check_corners(c2, x1, y1, s1):
+def check_corners(c2, x1, y1, s1x, s1y):
     for x2, y2 in c2:
-        if x1 <= x2 <= x1 + s1 and y1 <= y2 <= y1 + s1:
+        if x1 <= x2 <= x1 + s1x and y1 <= y2 <= y1 + s1y:
             return True
     return False
 
 
 def overlap(positions, sizes):
-    for i, ps in enumerate(zip(positions, sizes)):
-        p1, s1 = ps
-        corners1 = corners(p1, s1)
+    for i in range(len(positions)):
+        p1, s1 = positions[i], sizes[i]
+        corners1 = corners(*p1, *s1)
         for j in range(i):
             p2, s2 = positions[j], sizes[j]
-            corners2 = corners(p2, s2)
-            if check_corners(corners1, *p2, s2) or check_corners(corners2, *p1, s1):
+            corners2 = corners(*p2, *s2)
+            if check_corners(corners1, *p2, *s2) or check_corners(corners2, *p1, *s1):
                 return True
 
     return False
 
 
-def reset_pos_canvas(positions, sizes):
-    positions -= np.min(positions, axis=0)
-    canvas_size = np.max(positions + sizes.reshape((len(positions), 1)))
-
-    return positions, canvas_size
-
-
 # Intra-cluster shrinking
 # For each image, set it as close to the representative for that cluster as possible without overlapping
-def shrink_intra(positions, sizes, representative, labels, image_size):
+def shrink_intra(positions, sizes, representative, labels):
     # make sure we start with biggest
-    sort_indices = np.argsort(sizes)[::-1]
+    # TODO fix for sizes for both dimensions
+    sort_indices = np.argsort(sizes, axis=0)[:, 0][::-1]
     reverse_sort_indices = np.argsort(sort_indices)
 
     # temporarily sort everything descending by size, unsort positions when returning
@@ -157,7 +155,7 @@ def shrink_intra(positions, sizes, representative, labels, image_size):
 
 # Inter-cluster shrinking
 # For each cluster, move it to closer to the center of all images
-def shrink_inter1(positions, sizes, representative, labels, image_size):
+def shrink_inter1(positions, sizes, representative, labels):
     mean = np.mean(positions, axis=0)
     new_positions = positions
 
@@ -179,7 +177,7 @@ def shrink_inter1(positions, sizes, representative, labels, image_size):
     return new_positions
 
 
-def shrink_inter2(positions, sizes, representative, labels, image_size):
+def shrink_inter2(positions, sizes, representative, labels):
     mean = np.mean(positions, axis=0)
 
     # Try to move clusters closer separately
@@ -203,7 +201,7 @@ def shrink_inter2(positions, sizes, representative, labels, image_size):
     return positions
 
 
-def shrink_with_sparseness(positions, sizes, representative, cluster_labels, image_size, sparseness):
+def shrink_with_sparseness(positions, sizes, sparseness):
     mean = np.mean(positions, axis=0)
     sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
 
