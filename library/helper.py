@@ -34,7 +34,7 @@ def get_embeddings(dataset_number, image_file_paths):
 
 
 def get_image_size_ratios(image_file_paths):
-    ratios = np.zeros((len(image_file_paths), ))
+    ratios = np.zeros((len(image_file_paths),))
     for i, image_file_name in enumerate(image_file_paths):
         image = Image.open(image_file_name)
         ratios[i] = image.size[0] / image.size[1]

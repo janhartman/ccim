@@ -2,9 +2,9 @@ from copy import copy
 
 import numpy as np
 from umap import UMAP
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, MeanShift
 from sklearn.decomposition import PCA
-from sklearn.manifold import MDS
+from sklearn.manifold import MDS, TSNE
 from scipy.spatial.distance import pdist, squareform
 from sklearn.metrics import silhouette_samples
 
@@ -21,12 +21,22 @@ def mds(embeddings, init=None):
 
 
 def umap(embeddings):
-    return UMAP().fit_transform(embeddings)
+    return UMAP(metric='cosine').fit_transform(embeddings)
+
+
+def tsne(embeddings):
+    return TSNE(metric='cosine').fit_transform(embeddings)
 
 
 def k_means(em_2d, k):
     km = KMeans(n_clusters=k).fit(em_2d)
     return km.cluster_centers_, km.labels_
+
+
+def mean_shift(em_2d):
+    ms = MeanShift().fit(em_2d)
+    print('estimated {} clusters'.format(np.max(ms.labels_) + 1))
+    return ms.cluster_centers_, ms.labels_
 
 
 def silhouette(em_2d, labels):
@@ -90,11 +100,15 @@ def compare_distances(dists1, dists2):
     return np.sum(d)
 
 
-def overlap(positions, sizes):
+# indices is an array of indices which have changed - we only need to check these
+def overlap(positions, sizes, indices=None):
     other_side_pos = positions + sizes
     pos = np.hstack((positions, other_side_pos))
     for i in range(len(pos)):
-        for j in range(i):
+        for j in (indices if indices is not None else range(i)):
+            if i == j:
+                continue
+
             p1 = pos[i]
             p2 = pos[j]
 
@@ -185,7 +199,7 @@ def shrink_inter2(positions, sizes, representative, labels):
             new_pos = pos - alpha * (rep_pos - mean)
             new_positions[cluster_indices] = new_pos
 
-            if not overlap(new_positions, sizes):
+            if not overlap(new_positions, sizes, cluster_indices[0]):
                 print('inter #2', label, alpha)
                 break
 
@@ -211,7 +225,7 @@ def shrink_with_sparseness(positions, sizes, sparseness):
 
             positions[i] = new_pos
 
-            if not overlap(positions, sizes):
+            if not overlap(positions, sizes, [i]):
                 print('moved', i, 'by', round(alpha, 3))
                 break
             else:
