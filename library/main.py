@@ -3,10 +3,11 @@ import compute
 
 import numpy as np
 
-def main(k=4, image_size=200, sparseness=0.5, dataset_number=4):
+def main(k=4, image_size=200, sparseness=0.5, dataset_number=2):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
+    print('loaded {} images'.format(len(imgs)))
 
     # Compute 2D embeddings with MDS / UMAP
     em_2d = compute.mds(embeddings)

@@ -91,26 +91,20 @@ def compare_distances(dists1, dists2):
     return np.sum(d)
 
 
-def corners(x, y, sx, sy):
-    return [(x, y), (x + sx, y), (x, y + sy), (x + sx, y + sy)]
-
-
-def check_corners(c2, x1, y1, s1x, s1y):
-    for x2, y2 in c2:
-        if x1 <= x2 <= x1 + s1x and y1 <= y2 <= y1 + s1y:
-            return True
-    return False
-
-
 def overlap(positions, sizes):
-    for i in range(len(positions)):
-        p1, s1 = positions[i], sizes[i]
-        corners1 = corners(*p1, *s1)
+    other_side_pos = positions + sizes
+    pos = np.hstack((positions, other_side_pos))
+    for i in range(len(pos)):
         for j in range(i):
-            p2, s2 = positions[j], sizes[j]
-            corners2 = corners(*p2, *s2)
-            if check_corners(corners1, *p2, *s2) or check_corners(corners2, *p1, *s1):
-                return True
+            p1 = pos[i]
+            p2 = pos[j]
+
+            if p1[0] > p2[2] or p2[0] > p1[2]:
+                continue
+            elif p1[1] > p2[3] or p2[1] > p1[3]:
+                continue
+
+            return True
 
     return False
 
