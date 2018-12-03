@@ -2,7 +2,7 @@ import helper
 import compute
 
 
-def main(k=5, image_size=200, sparseness=0.5, dataset_number=4):
+def main(k=4, image_size=200, sparseness=0.5, dataset_number=5, padding=1):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
@@ -15,7 +15,8 @@ def main(k=5, image_size=200, sparseness=0.5, dataset_number=4):
 
     # Perform clustering, compute silhouettes
     # cluster_centers, cluster_labels = compute.k_means(em_2d, k)
-    cluster_centers, cluster_labels = compute.mean_shift(em_2d)
+    #cluster_centers, cluster_labels = compute.mean_shift(em_2d)
+    cluster_centers, cluster_labels = compute.hdbscan(em_2d)
     # silhouettes = compute.silhouette(em_2d, cluster_labels)
 
     # K representative images
@@ -32,7 +33,7 @@ def main(k=5, image_size=200, sparseness=0.5, dataset_number=4):
 
     # Expand as long as overlaps occur - gradually increase space between images
     iters = 0
-    while compute.overlap(positions, sizes):
+    while compute.overlap(positions, sizes, padding):
         positions *= 1.05
         iters += 1
     print('overlap resolved in {} iterations'.format(iters))
@@ -41,22 +42,22 @@ def main(k=5, image_size=200, sparseness=0.5, dataset_number=4):
     dists1 = compute.get_distances(positions)
 
     # Overlapping resolved, now "shrink" towards representative images
-    positions = compute.shrink_intra(positions, sizes, representative, cluster_labels)
+    positions = compute.shrink_intra(positions, sizes, representative, cluster_labels, padding)
     dists2 = compute.get_distances(positions)
     # helper.plot(imgs, positions, sizes)
 
     # Move clusters closer together by same factor
-    positions = compute.shrink_inter1(positions, sizes, representative, cluster_labels)
+    positions = compute.shrink_inter1(positions, sizes, representative, cluster_labels, padding)
     dists3 = compute.get_distances(positions)
     # helper.plot(imgs, positions, sizes)
 
     # Move clusters closer together separately by different factors
-    positions = compute.shrink_inter2(positions, sizes, representative, cluster_labels)
+    positions = compute.shrink_inter2(positions, sizes, representative, cluster_labels, padding)
     dists3 = compute.get_distances(positions)
     # helper.plot(imgs, positions, sizes)
 
     # Further shrink (move images that are closer to center first)
-    positions = compute.shrink_with_sparseness(positions, sizes, sparseness)
+    positions = compute.shrink_with_sparseness(positions, sizes, sparseness, padding)
     dists4 = compute.get_distances(positions)
     helper.plot(imgs, positions, sizes)
 

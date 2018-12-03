@@ -31,6 +31,12 @@ The aims of the algorithm:
 - local or global scoring (depends on starting method: MDS/tSNE)
 - absolute or square?
 
+- padding (parameter) - how close can images be
+
+
+- clustering based on original space (CNN codes)
+- DBSCAN clustering / Louvain
+
 ## Idea 2
 - iteratively place images (representative first)
 - for each image, find already placed images that should be close to it and place it randomly while taking those into account

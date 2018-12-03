@@ -1,6 +1,7 @@
 from copy import copy
 
 import numpy as np
+from hdbscan import HDBSCAN
 from umap import UMAP
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.decomposition import PCA
@@ -37,6 +38,31 @@ def mean_shift(em_2d):
     ms = MeanShift().fit(em_2d)
     print('estimated {} clusters'.format(np.max(ms.labels_) + 1))
     return ms.cluster_centers_, ms.labels_
+
+
+def hdbscan(em_2d):
+    # TODO sometimes they are all -1
+    # TODO parameter selection
+    labels = HDBSCAN(min_samples=3, min_cluster_size=3).fit_predict(em_2d)
+    print(labels)
+    num_clusters = np.max(labels) + 1
+    print('Found {} clusters'.format(num_clusters))
+    centers = np.zeros((num_clusters, 2))
+    for label in range(num_clusters):
+        cluster = em_2d[np.where(labels == label)]
+        centers[label] = np.mean(cluster, axis=0)
+
+    outliers = np.where(labels == -1)[0]
+    for i in outliers:
+        closest_center = np.argmin(np.linalg.norm(centers - em_2d[i], axis=1))
+        labels[i] = closest_center
+
+    for label in range(num_clusters):
+        cluster = em_2d[np.where(labels == label)]
+        centers[label] = np.mean(cluster, axis=0)
+
+    print(labels)
+    return centers, labels
 
 
 def silhouette(em_2d, labels):
@@ -101,7 +127,7 @@ def compare_distances(dists1, dists2):
 
 
 # indices is an array of indices which have changed - we only need to check these
-def overlap(positions, sizes, indices=None):
+def overlap(positions, sizes, padding, indices=None):
     other_side_pos = positions + sizes
     pos = np.hstack((positions, other_side_pos))
     for i in range(len(pos)):
@@ -112,9 +138,9 @@ def overlap(positions, sizes, indices=None):
             p1 = pos[i]
             p2 = pos[j]
 
-            if p1[0] > p2[2] or p2[0] > p1[2]:
+            if p1[0] > p2[2] + padding or p2[0] > p1[2] + padding:
                 continue
-            elif p1[1] > p2[3] or p2[1] > p1[3]:
+            elif p1[1] > p2[3] + padding or p2[1] > p1[3] + padding:
                 continue
 
             return True
@@ -124,7 +150,7 @@ def overlap(positions, sizes, indices=None):
 
 # Intra-cluster shrinking
 # For each image, set it as close to the representative for that cluster as possible without overlapping
-def shrink_intra(positions, sizes, representative, labels):
+def shrink_intra(positions, sizes, representative, labels, padding):
     # make sure we start with biggest
     # TODO fix for sizes for both dimensions
     sort_indices = np.argsort(sizes, axis=0)[:, 0][::-1]
@@ -151,7 +177,7 @@ def shrink_intra(positions, sizes, representative, labels):
             new_pos = pos - alpha * (pos - rep_pos)
             new_positions[i] = new_pos
 
-            if not overlap(new_positions[cluster_indices], sizes[cluster_indices]):
+            if not overlap(new_positions[cluster_indices], sizes[cluster_indices], padding):
                 # print('intra', i, alpha)
                 break
 
@@ -162,7 +188,7 @@ def shrink_intra(positions, sizes, representative, labels):
 
 # Inter-cluster shrinking
 # For each cluster, move it to closer to the center of all images
-def shrink_inter1(positions, sizes, representative, labels):
+def shrink_inter1(positions, sizes, representative, labels, padding):
     mean = np.mean(positions, axis=0)
     new_positions = positions
 
@@ -177,14 +203,14 @@ def shrink_inter1(positions, sizes, representative, labels):
             new_pos = pos - alpha * (rep_pos - mean)
             new_positions[cluster_indices] = new_pos
 
-        if not overlap(new_positions, sizes):
+        if not overlap(new_positions, sizes, padding):
             print('inter #1', alpha)
             break
 
     return new_positions
 
 
-def shrink_inter2(positions, sizes, representative, labels):
+def shrink_inter2(positions, sizes, representative, labels, padding):
     mean = np.mean(positions, axis=0)
 
     # Try to move clusters closer separately
@@ -199,7 +225,7 @@ def shrink_inter2(positions, sizes, representative, labels):
             new_pos = pos - alpha * (rep_pos - mean)
             new_positions[cluster_indices] = new_pos
 
-            if not overlap(new_positions, sizes, cluster_indices[0]):
+            if not overlap(new_positions, sizes, padding, cluster_indices[0]):
                 print('inter #2', label, alpha)
                 break
 
@@ -208,7 +234,7 @@ def shrink_inter2(positions, sizes, representative, labels):
     return positions
 
 
-def shrink_with_sparseness(positions, sizes, sparseness):
+def shrink_with_sparseness(positions, sizes, sparseness, padding):
     mean = np.mean(positions, axis=0)
     sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
 
@@ -225,8 +251,8 @@ def shrink_with_sparseness(positions, sizes, sparseness):
 
             positions[i] = new_pos
 
-            if not overlap(positions, sizes, [i]):
-                print('moved', i, 'by', round(alpha, 3))
+            if not overlap(positions, sizes, padding, [i]):
+                # print('moved', i, 'by', round(alpha, 3))
                 break
             else:
                 positions[i] = pos
