@@ -2,7 +2,7 @@ import helper
 import compute
 
 
-def main(k=4, sparseness=0.2, dataset_number=1, padding=2):
+def main(k=3, sparseness=0.2, dataset_number=2, padding=2):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
@@ -13,8 +13,9 @@ def main(k=4, sparseness=0.2, dataset_number=1, padding=2):
     em_2d = compute.umap(embeddings)
 
     # Perform clustering
-    # cluster_centers, cluster_labels = compute.k_means(em_2d, k)
-    cluster_centers, cluster_labels, cluster_labels_orig = compute.hdbscan(em_2d)
+    cluster_centers, cluster_labels = compute.k_means(em_2d, k)
+    cluster_labels_orig = cluster_labels
+    # cluster_centers, cluster_labels, cluster_labels_orig = compute.hdbscan(em_2d)
 
     # Representative images
     representative = compute.get_representative(em_2d, cluster_centers, cluster_labels, None)

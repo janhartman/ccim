@@ -36,7 +36,7 @@ def k_means(em_2d, k):
 
 def hdbscan(em_2d):
     # TODO parameter selection
-    labels = HDBSCAN(min_samples=2, min_cluster_size=3).fit_predict(em_2d)
+    labels = HDBSCAN(min_samples=2, min_cluster_size=5).fit_predict(em_2d)
     return get_cluster_centers_labels(em_2d, labels)
 
 

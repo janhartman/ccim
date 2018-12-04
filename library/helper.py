@@ -43,7 +43,7 @@ def get_image_size_ratios(image_file_paths):
         ratios[i] = image.size[0] / image.size[1]
         size = min(size, image.size[0], image.size[1])
         image.close()
-    return size, ratios
+    return size*5, ratios
 
 
 def plot_clusters(em_2d, cluster_centers, cluster_labels, rep):
@@ -64,11 +64,12 @@ def plot(image_file_paths, positions, sizes, border=10):
 
     for image_file_name, pos, size, i in zip(image_file_paths, tmp_positions, sizes, range(len(sizes))):
         image = Image.open(image_file_name)
-        image.thumbnail(tuple(size.astype(np.int32)))
-        vis.paste(image, (int(pos[0]), int(pos[1])))
+        resized_image = image.resize(tuple(size.astype(np.int32)))
+        vis.paste(resized_image, (int(pos[0]), int(pos[1])))
 
         # r = [pos[0], pos[1], pos[0] + size[0], pos[1] + size[1]]
         # draw.rectangle(r, outline=(0, 0, 0))
         image.close()
+        resized_image.close()
 
     vis.show()
