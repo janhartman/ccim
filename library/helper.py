@@ -53,7 +53,7 @@ def plot_clusters(em_2d, cluster_centers, cluster_labels, rep):
     plt.show()
 
 
-def plot(image_file_paths, positions, sizes, border=10):
+def plot(image_file_paths, positions, sizes, border=15):
     tmp_positions = positions - np.min(positions, axis=0) + border
 
     canvas_size = np.max(tmp_positions + sizes, axis=0) + border

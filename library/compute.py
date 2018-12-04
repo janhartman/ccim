@@ -34,6 +34,32 @@ def k_means(em_2d, k):
     return km.cluster_centers_, km.labels_
 
 
+def k_means_high_dim(embeddings, em_2d, k):
+    _, labels = k_means(embeddings, k)
+    num_clusters = np.max(labels) + 1
+
+    # Compute cluster centers
+    centers = np.zeros((num_clusters, 2))
+    for label in range(num_clusters):
+        cluster = em_2d[np.where(labels == label)]
+        centers[label] = np.mean(cluster, axis=0)
+
+    return centers, labels
+
+
+def hdbscan_high_dim(embeddings, em_2d):
+    _, labels, labels_orig = hdbscan(embeddings)
+    num_clusters = np.max(labels) + 1
+
+    # Compute cluster centers
+    centers = np.zeros((num_clusters, 2))
+    for label in range(num_clusters):
+        cluster = em_2d[np.where(labels == label)]
+        centers[label] = np.mean(cluster, axis=0)
+
+    return centers, labels, labels_orig
+
+
 def hdbscan(em_2d):
     # TODO parameter selection
     labels = HDBSCAN(min_samples=2, min_cluster_size=5).fit_predict(em_2d)
@@ -47,7 +73,7 @@ def get_cluster_centers_labels(em_2d, labels):
     print('Found {} clusters'.format(num_clusters))
 
     # Compute cluster centers
-    centers = np.zeros((num_clusters, 2))
+    centers = np.zeros((num_clusters, em_2d.shape[1]))
     for label in range(num_clusters):
         cluster = em_2d[np.where(labels == label)]
         centers[label] = np.mean(cluster, axis=0)
