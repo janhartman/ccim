@@ -11,7 +11,9 @@ datasets = {
     2: 'traffic-signs',
     3: 'bone-healing',
     4: 'dicty-development',
-    5: 'yplp'
+    5: 'yplp',
+    6: 'caltech_100',
+    7: 'mnist_100'
 }
 
 
@@ -35,11 +37,13 @@ def get_embeddings(dataset_number, image_file_paths):
 
 def get_image_size_ratios(image_file_paths):
     ratios = np.zeros((len(image_file_paths),))
+    size = 10000
     for i, image_file_name in enumerate(image_file_paths):
         image = Image.open(image_file_name)
         ratios[i] = image.size[0] / image.size[1]
+        size = min(size, image.size[0], image.size[1])
         image.close()
-    return ratios
+    return size, ratios
 
 
 def plot_clusters(em_2d, cluster_centers, cluster_labels, rep):

@@ -32,10 +32,10 @@ The aims of the algorithm:
 - absolute or square?
 
 - padding (parameter) - how close can images be
+- HDBSCAN clustering
 
 
 - clustering based on original space (CNN codes)
-- DBSCAN clustering / Louvain
 
 ## Idea 2
 - iteratively place images (representative first)

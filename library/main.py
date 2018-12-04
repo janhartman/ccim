@@ -2,32 +2,29 @@ import helper
 import compute
 
 
-def main(k=4, image_size=200, sparseness=0.5, dataset_number=5, padding=1):
+def main(k=4, sparseness=0.2, dataset_number=1, padding=2):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
     print('loaded {} images'.format(len(imgs)))
 
     # Compute 2D embeddings with MDS / UMAP
-    em_2d = compute.mds(embeddings)
-    # em_2d = compute.umap(embeddings)
-    # em_2d = compute.tsne(embeddings)
+    # em_2d = compute.mds(embeddings)
+    em_2d = compute.umap(embeddings)
 
-    # Perform clustering, compute silhouettes
+    # Perform clustering
     # cluster_centers, cluster_labels = compute.k_means(em_2d, k)
-    #cluster_centers, cluster_labels = compute.mean_shift(em_2d)
-    cluster_centers, cluster_labels = compute.hdbscan(em_2d)
-    # silhouettes = compute.silhouette(em_2d, cluster_labels)
+    cluster_centers, cluster_labels, cluster_labels_orig = compute.hdbscan(em_2d)
 
-    # K representative images
+    # Representative images
     representative = compute.get_representative(em_2d, cluster_centers, cluster_labels, None)
 
     # Sizes and positions of the images
-    ratios = helper.get_image_size_ratios(imgs)
+    image_size, ratios = helper.get_image_size_ratios(imgs)
     sizes = compute.get_sizes(image_size, em_2d, ratios, cluster_centers, cluster_labels, representative)
     positions = compute.get_positions(em_2d, image_size)
 
-    # helper.plot_clusters(em_2d, cluster_centers, cluster_labels, representative)
+    helper.plot_clusters(em_2d, cluster_centers, cluster_labels_orig, representative)
 
     # helper.plot(imgs, positions, sizes)  # overlap
 

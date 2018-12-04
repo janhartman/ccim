@@ -1,13 +1,16 @@
 from copy import copy
 
 import numpy as np
+
 from hdbscan import HDBSCAN
 from umap import UMAP
-from sklearn.cluster import KMeans, MeanShift
-from sklearn.decomposition import PCA
-from sklearn.manifold import MDS, TSNE
+
 from scipy.spatial.distance import pdist, squareform
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.manifold import MDS
 from sklearn.metrics import silhouette_samples
+from sklearn import preprocessing
 
 
 def pca(embeddings):
@@ -22,11 +25,8 @@ def mds(embeddings, init=None):
 
 
 def umap(embeddings):
-    return UMAP(metric='cosine').fit_transform(embeddings)
-
-
-def tsne(embeddings):
-    return TSNE(metric='cosine').fit_transform(embeddings)
+    n = preprocessing.normalize(embeddings, norm='max', axis=0)
+    return UMAP(metric='cosine').fit_transform(n)
 
 
 def k_means(em_2d, k):
@@ -34,35 +34,39 @@ def k_means(em_2d, k):
     return km.cluster_centers_, km.labels_
 
 
-def mean_shift(em_2d):
-    ms = MeanShift().fit(em_2d)
-    print('estimated {} clusters'.format(np.max(ms.labels_) + 1))
-    return ms.cluster_centers_, ms.labels_
-
-
 def hdbscan(em_2d):
-    # TODO sometimes they are all -1
     # TODO parameter selection
-    labels = HDBSCAN(min_samples=3, min_cluster_size=3).fit_predict(em_2d)
-    print(labels)
+    labels = HDBSCAN(min_samples=2, min_cluster_size=3).fit_predict(em_2d)
+    return get_cluster_centers_labels(em_2d, labels)
+
+
+def get_cluster_centers_labels(em_2d, labels):
     num_clusters = np.max(labels) + 1
+
+    print(labels)
     print('Found {} clusters'.format(num_clusters))
+
+    # Compute cluster centers
     centers = np.zeros((num_clusters, 2))
     for label in range(num_clusters):
         cluster = em_2d[np.where(labels == label)]
         centers[label] = np.mean(cluster, axis=0)
 
+    # Assign outliers to the closest centers
     outliers = np.where(labels == -1)[0]
-    for i in outliers:
-        closest_center = np.argmin(np.linalg.norm(centers - em_2d[i], axis=1))
-        labels[i] = closest_center
+    new_labels = copy(labels)
+    if len(outliers) > 0:
+        for i in outliers:
+            closest_center = np.argmin(np.linalg.norm(centers - em_2d[i], axis=1))
+            new_labels[i] = closest_center
 
-    for label in range(num_clusters):
-        cluster = em_2d[np.where(labels == label)]
-        centers[label] = np.mean(cluster, axis=0)
+        # Recompute centers by taking outliers into account
+        for label in range(num_clusters):
+            cluster = em_2d[np.where(new_labels == label)]
+            centers[label] = np.mean(cluster, axis=0)
 
-    print(labels)
-    return centers, labels
+        print(new_labels)
+    return centers, new_labels, labels
 
 
 def silhouette(em_2d, labels):
@@ -252,7 +256,7 @@ def shrink_with_sparseness(positions, sizes, sparseness, padding):
             positions[i] = new_pos
 
             if not overlap(positions, sizes, padding, [i]):
-                # print('moved', i, 'by', round(alpha, 3))
+                print('moved', i, 'by', round(alpha, 3))
                 break
             else:
                 positions[i] = pos
