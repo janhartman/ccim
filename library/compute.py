@@ -1,15 +1,15 @@
 from copy import copy
+from itertools import product
 
 import numpy as np
 
 from hdbscan import HDBSCAN
 from umap import UMAP
-
 from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
-from sklearn.metrics import silhouette_samples
+from sklearn.metrics import silhouette_samples, silhouette_score
 from sklearn import preprocessing
 
 
@@ -29,48 +29,32 @@ def umap(embeddings):
     return UMAP(metric='cosine').fit_transform(n)
 
 
-def k_means(em_2d, k):
-    km = KMeans(n_clusters=k).fit(em_2d)
-    return km.cluster_centers_, km.labels_
+def k_means(em_2d, k_default=None):
+    k_max = k_default if k_default else 10
+    km_all = [KMeans(n_clusters=k).fit(em_2d) for k in range(2, k_max + 1)]
+    ss = [silhouette_score(em_2d, km.labels_) for km in km_all]
+    km_best = km_all[np.argmax(ss)]
 
-
-def k_means_high_dim(embeddings, em_2d, k):
-    _, labels = k_means(embeddings, k)
-    num_clusters = np.max(labels) + 1
-
-    # Compute cluster centers
-    centers = np.zeros((num_clusters, 2))
-    for label in range(num_clusters):
-        cluster = em_2d[np.where(labels == label)]
-        centers[label] = np.mean(cluster, axis=0)
-
-    return centers, labels
-
-
-def hdbscan_high_dim(embeddings, em_2d):
-    _, labels, labels_orig = hdbscan(embeddings)
-    num_clusters = np.max(labels) + 1
-
-    # Compute cluster centers
-    centers = np.zeros((num_clusters, 2))
-    for label in range(num_clusters):
-        cluster = em_2d[np.where(labels == label)]
-        centers[label] = np.mean(cluster, axis=0)
-
-    return centers, labels, labels_orig
+    print('Clusters:', np.max(km_best.labels_) + 1)
+    return km_best.cluster_centers_, km_best.labels_
 
 
 def hdbscan(em_2d):
-    # TODO parameter selection
-    labels = HDBSCAN(min_samples=2, min_cluster_size=5).fit_predict(em_2d)
+    # decrease min_samples and min_cluster size until we have <= 10% outliers
+    for min_samples, min_cluster_size in product(range(len(em_2d) // 5, 1, -1), range(20, 1, -1)):
+        labels = HDBSCAN(min_samples=min_samples, min_cluster_size=min_cluster_size).fit_predict(em_2d)
+        n_outliers = np.sum(labels == -1)
+
+        if n_outliers <= (len(em_2d) // 10):
+            print('min samples: {}\nmin cluster size: {}\nClusters: {}\nOutliers: {}'
+                  .format(min_samples, min_cluster_size, np.max(labels) + 1, n_outliers))
+            break
+
     return get_cluster_centers_labels(em_2d, labels)
 
 
 def get_cluster_centers_labels(em_2d, labels):
     num_clusters = np.max(labels) + 1
-
-    print(labels)
-    print('Found {} clusters'.format(num_clusters))
 
     # Compute cluster centers
     centers = np.zeros((num_clusters, em_2d.shape[1]))
@@ -91,11 +75,10 @@ def get_cluster_centers_labels(em_2d, labels):
             cluster = em_2d[np.where(new_labels == label)]
             centers[label] = np.mean(cluster, axis=0)
 
-        print(new_labels)
     return centers, new_labels, labels
 
 
-def silhouette(em_2d, labels):
+def get_silhouettes(em_2d, labels):
     return silhouette_samples(em_2d, labels)
 
 
@@ -107,13 +90,13 @@ def normalize(arr, axis=None):
 
 
 # choose either the closest to the center or largest silhouettes
-def get_representative(em_2d, centers, labels, silhouettes):
+def get_representative(em_2d, centers, labels, silhouettes, mode):
     # closest to the centers
     rep = [np.linalg.norm(em_2d - center, axis=1).argmin() for center in centers]
 
     # largest silhouette in cluster
-    # rep = [int(i[0]) for i in [np.where(silhouettes == np.max(silhouettes[np.where(labels == label)]))
-    #                            for label in range(len(centers))]]
+    # rep = [int(i[0]) for i in [np.where(silhouettes == np.max(silhouettes[np.where(labels == label)])) for label in range(len(centers))]]
+
     return rep
 
 
@@ -282,7 +265,7 @@ def shrink_with_sparseness(positions, sizes, sparseness, padding):
             positions[i] = new_pos
 
             if not overlap(positions, sizes, padding, [i]):
-                print('moved', i, 'by', round(alpha, 3))
+                # print('moved', i, 'by', round(alpha, 3))
                 break
             else:
                 positions[i] = pos

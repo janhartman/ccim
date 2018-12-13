@@ -2,28 +2,31 @@ import helper
 import compute
 
 
-def main(k=5, sparseness=0.7, dataset_number=5, padding=2):
+def main(dataset_number=4, sparseness=0.0, image_size=500, padding=10, mode=0):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
     print('loaded {} images'.format(len(imgs)))
 
     # Compute 2D embeddings with MDS / UMAP
-    # em_2d = compute.mds(embeddings)
-    em_2d = compute.umap(embeddings)
+    if mode:
+        em_2d = compute.mds(embeddings, init=compute.pca(embeddings))
+    else:
+        em_2d = compute.umap(embeddings)
 
     # Perform clustering
-    # cluster_centers, cluster_labels = compute.k_means(em_2d, k)
-    # cluster_centers, cluster_labels = compute.k_means_high_dim(embeddings, em_2d, k)
-    # cluster_labels_orig = cluster_labels
-    cluster_centers, cluster_labels, cluster_labels_orig = compute.hdbscan(em_2d)
-    # cluster_centers, cluster_labels, cluster_labels_orig = compute.hdbscan_high_dim(embeddings, em_2d)
+    if mode:
+        cluster_centers, cluster_labels = compute.k_means(em_2d, k_default=None)
+        cluster_labels_orig = cluster_labels
+    else:
+        cluster_centers, cluster_labels, cluster_labels_orig = compute.hdbscan(em_2d)
 
     # Representative images
-    representative = compute.get_representative(em_2d, cluster_centers, cluster_labels, None)
+    silhouettes = compute.get_silhouettes(em_2d, cluster_labels)
+    representative = compute.get_representative(em_2d, cluster_centers, cluster_labels, silhouettes, mode)
 
     # Sizes and positions of the images
-    image_size, ratios = helper.get_image_size_ratios(imgs)
+    ratios = helper.get_image_size_ratios(imgs)
     sizes = compute.get_sizes(image_size, em_2d, ratios, cluster_centers, cluster_labels, representative)
     positions = compute.get_positions(em_2d, image_size)
 

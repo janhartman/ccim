@@ -3,7 +3,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
-from PIL import Image, ImageOps, ImageDraw
+from PIL import Image
 from orangecontrib.imageanalytics.image_embedder import ImageEmbedder
 
 datasets = {
@@ -13,7 +13,8 @@ datasets = {
     4: 'dicty-development',
     5: 'yplp',
     6: 'caltech_100',
-    7: 'mnist_100'
+    7: 'mnist_100',
+    8: 'yplp-big'
 }
 
 
@@ -37,13 +38,11 @@ def get_embeddings(dataset_number, image_file_paths):
 
 def get_image_size_ratios(image_file_paths):
     ratios = np.zeros((len(image_file_paths),))
-    size = 10000
     for i, image_file_name in enumerate(image_file_paths):
         image = Image.open(image_file_name)
         ratios[i] = image.size[0] / image.size[1]
-        size = min(size, image.size[0], image.size[1])
         image.close()
-    return size*5, ratios
+    return ratios
 
 
 def plot_clusters(em_2d, cluster_centers, cluster_labels, rep):
@@ -60,15 +59,12 @@ def plot(image_file_paths, positions, sizes, border=15):
     canvas_size = tuple(canvas_size.astype(np.int32))
 
     vis = Image.new('RGB', canvas_size, (255, 255, 255))
-    draw = ImageDraw.Draw(vis)
 
     for image_file_name, pos, size, i in zip(image_file_paths, tmp_positions, sizes, range(len(sizes))):
         image = Image.open(image_file_name)
         resized_image = image.resize(tuple(size.astype(np.int32)))
         vis.paste(resized_image, (int(pos[0]), int(pos[1])))
 
-        # r = [pos[0], pos[1], pos[0] + size[0], pos[1] + size[1]]
-        # draw.rectangle(r, outline=(0, 0, 0))
         image.close()
         resized_image.close()
 
