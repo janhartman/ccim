@@ -272,37 +272,6 @@ def shrink_with_sparseness_center(positions, sizes, sparseness, padding):
     return positions
 
 
-# Move each image towards the cluster center
-def shrink_with_sparseness_clusters(positions, sizes, sparseness, representative, labels, padding):
-    denseness = 1 - sparseness
-    if denseness == 0.0:
-        return positions
-
-    for label, rep in enumerate(representative):
-        cluster = positions[np.where(labels == label)]
-        mean = np.mean(cluster, axis=0)
-        sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
-
-        # go from nearer to farther images
-        for i in sort_indices:
-            if labels[i] != label:
-                continue
-
-            pos = copy(positions[i])
-
-            for alpha in np.linspace(denseness, 0.0, int(denseness * 100) - 1):
-                new_pos = pos - alpha * (pos - mean)
-
-                positions[i] = new_pos
-
-                if not overlap(positions, sizes, padding, [i]):
-                    break
-                else:
-                    positions[i] = pos
-
-    return shrink_inter2(positions, sizes, representative, labels, padding)
-
-
 # Move separately by x and y coordinate
 def shrink_xy(positions, sizes, representative, labels, padding, smaller=False):
     for label, rep in enumerate(representative):

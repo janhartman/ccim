@@ -55,7 +55,6 @@ def main(dataset_number=4, sparseness=0.0, image_size=500, padding=5, mode=1):
 
     # Further shrink (move images that are closer to center first)
     # positions = compute.shrink_with_sparseness_center(positions, sizes, sparseness, representative, labels, padding)
-    # positions = compute.shrink_with_sparseness_clusters(positions, sizes, sparseness, representative, labels, padding)
 
     # Shrink by x and y separately
     positions = compute.shrink_xy(positions, sizes, representative, labels, padding)
