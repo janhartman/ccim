@@ -165,8 +165,7 @@ def overlap(positions, sizes, padding, indices=None):
 # For each image, set it as close to the representative for that cluster as possible without overlapping
 def shrink_intra(positions, sizes, representative, labels, padding):
     # make sure we start with biggest
-    # TODO fix for sizes for both dimensions
-    sort_indices = np.argsort(sizes, axis=0)[:, 0][::-1]
+    sort_indices = np.argsort(np.linalg.norm(sizes, axis=1))[::-1]
     reverse_sort_indices = np.argsort(sort_indices)
 
     # temporarily sort everything descending by size, unsort positions when returning
@@ -247,7 +246,8 @@ def shrink_inter2(positions, sizes, representative, labels, padding):
     return positions
 
 
-def shrink_with_sparseness(positions, sizes, sparseness, padding):
+# Move each image towards the center of all images
+def shrink_with_sparseness_center(positions, sizes, sparseness, padding):
     mean = np.mean(positions, axis=0)
     sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
 
@@ -255,7 +255,7 @@ def shrink_with_sparseness(positions, sizes, sparseness, padding):
     if denseness == 0.0:
         return positions
 
-    # randomly choose elements
+    # go from nearer to farther images
     for i in sort_indices:
         pos = copy(positions[i])
 
@@ -265,9 +265,99 @@ def shrink_with_sparseness(positions, sizes, sparseness, padding):
             positions[i] = new_pos
 
             if not overlap(positions, sizes, padding, [i]):
-                # print('moved', i, 'by', round(alpha, 3))
                 break
             else:
                 positions[i] = pos
+
+    return positions
+
+
+# Move each image towards the cluster center
+def shrink_with_sparseness_clusters(positions, sizes, sparseness, representative, labels, padding):
+    denseness = 1 - sparseness
+    if denseness == 0.0:
+        return positions
+
+    for label, rep in enumerate(representative):
+        cluster = positions[np.where(labels == label)]
+        mean = np.mean(cluster, axis=0)
+        sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
+
+        # go from nearer to farther images
+        for i in sort_indices:
+            if labels[i] != label:
+                continue
+
+            pos = copy(positions[i])
+
+            for alpha in np.linspace(denseness, 0.0, int(denseness * 100) - 1):
+                new_pos = pos - alpha * (pos - mean)
+
+                positions[i] = new_pos
+
+                if not overlap(positions, sizes, padding, [i]):
+                    break
+                else:
+                    positions[i] = pos
+
+    return shrink_inter2(positions, sizes, representative, labels, padding)
+
+
+# Move separately by x and y coordinate
+def shrink_xy(positions, sizes, representative, labels, padding, smaller=False):
+    for label, rep in enumerate(representative):
+        mean = positions[rep] + sizes[rep] / 2
+        sort_indices = np.argsort(np.linalg.norm(positions + sizes / 2 - mean, axis=1))
+
+        # go from nearer to farther images
+        for i in sort_indices:
+            if labels[i] != label:
+                continue
+
+            pos = copy(positions[i])
+
+            for alpha in np.linspace(1.0, 0.0, 101):
+                vec = - alpha * (pos - mean)
+                positions[i] = pos + vec
+
+                if not overlap(positions, sizes, padding, [i]):
+                    break
+                else:
+                    # check x and y separately
+                    # if the smaller coordinate is causing problems, try setting it to 0
+                    smaller_idx = np.argmin(np.abs(vec))
+                    vec_c = copy(vec)
+                    vec_c[smaller_idx] = 0
+                    positions[i] = pos + vec_c
+
+                    if not overlap(positions, sizes, padding, [i]):
+                        break
+                    else:
+                        # try setting the bigger coordinate to 0 if it is allowed
+                        if smaller:
+                            vec_c = copy(vec)
+                            vec_c[1 - smaller_idx] = 0
+                            positions[i] = pos + vec_c
+
+                            if not overlap(positions, sizes, padding, [i]):
+                                break
+                            else:
+                                positions[i] = pos
+                        else:
+                            positions[i] = pos
+
+    return positions
+
+
+def shrink_with_shaking(positions, sizes, padding):
+    for i, pos in enumerate(positions):
+        pos = copy(pos)
+
+        # vector coordinates are in [-1, 1], multiplied by third size of the image
+        move = (np.random.random(2) * 2 - 1) * sizes[i] / 3
+        positions[i] = pos + move
+
+        if overlap(positions, sizes, padding, [i]):
+            positions[i] = pos
 
     return positions

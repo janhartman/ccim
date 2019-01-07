@@ -34,8 +34,11 @@ The aims of the algorithm:
 - padding (parameter) - how close can images be
 - HDBSCAN clustering
 
+- x/y coordinate (če bremza manjša, premakni po večji)
+- random premik vseh (če gre), potem spet stiskanje (se lahko rešimo dolgih verig)
+- iz večjih proti manjšim "shakih"
+- center dinamičen (np.mean) ali fiksen (pozicija reprezentativnega)
 
-- clustering based on original space (CNN codes)
 
 ## Idea 2
 - iteratively place images (representative first)
