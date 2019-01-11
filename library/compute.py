@@ -1,16 +1,11 @@
 from copy import copy
-from itertools import product
 
 import numpy as np
-
-from hdbscan import HDBSCAN
-from umap import UMAP
 from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import MDS
 from sklearn.metrics import silhouette_samples, silhouette_score
-from sklearn import preprocessing
 
 
 def pca(embeddings):
@@ -24,58 +19,12 @@ def mds(embeddings, init=None):
     return m.fit_transform(squareform(c), init=init)
 
 
-def umap(embeddings):
-    n = preprocessing.normalize(embeddings, norm='max', axis=0)
-    return UMAP(metric='cosine').fit_transform(n)
-
-
 def k_means(em_2d, k_default=None):
     k_max = k_default if k_default else 10
     km_all = [KMeans(n_clusters=k).fit(em_2d) for k in range(2, k_max + 1)]
     ss = [silhouette_score(em_2d, km.labels_) for km in km_all]
     km_best = km_all[np.argmax(ss)]
-
-    print('Clusters:', np.max(km_best.labels_) + 1)
     return km_best.cluster_centers_, km_best.labels_
-
-
-def hdbscan(em_2d):
-    # decrease min_samples and min_cluster size until we have <= 10% outliers
-    for min_samples, min_cluster_size in product(range(len(em_2d) // 5, 1, -1), range(20, 1, -1)):
-        labels = HDBSCAN(min_samples=min_samples, min_cluster_size=min_cluster_size).fit_predict(em_2d)
-        n_outliers = np.sum(labels == -1)
-
-        if n_outliers <= (len(em_2d) // 10):
-            print('min samples: {}\nmin cluster size: {}\nClusters: {}\nOutliers: {}'
-                  .format(min_samples, min_cluster_size, np.max(labels) + 1, n_outliers))
-            break
-
-    return get_cluster_centers_labels(em_2d, labels)
-
-
-def get_cluster_centers_labels(em_2d, labels):
-    num_clusters = np.max(labels) + 1
-
-    # Compute cluster centers
-    centers = np.zeros((num_clusters, em_2d.shape[1]))
-    for label in range(num_clusters):
-        cluster = em_2d[np.where(labels == label)]
-        centers[label] = np.mean(cluster, axis=0)
-
-    # Assign outliers to the closest centers
-    outliers = np.where(labels == -1)[0]
-    new_labels = copy(labels)
-    if len(outliers) > 0:
-        for i in outliers:
-            closest_center = np.argmin(np.linalg.norm(centers - em_2d[i], axis=1))
-            new_labels[i] = closest_center
-
-        # Recompute centers by taking outliers into account
-        for label in range(num_clusters):
-            cluster = em_2d[np.where(new_labels == label)]
-            centers[label] = np.mean(cluster, axis=0)
-
-    return centers, new_labels, labels
 
 
 def get_silhouettes(em_2d, labels):
@@ -90,7 +39,7 @@ def normalize(arr, axis=None):
 
 
 # choose either the closest to the center or largest silhouettes
-def get_representative(em_2d, centers, labels, silhouettes, mode):
+def get_representative(em_2d, centers, labels, silhouettes):
     # closest to the centers
     rep = [np.linalg.norm(em_2d - center, axis=1).argmin() for center in centers]
 
@@ -242,32 +191,6 @@ def shrink_inter2(positions, sizes, representative, labels, padding):
                 break
 
         positions[cluster_indices] = new_pos
-
-    return positions
-
-
-# Move each image towards the center of all images
-def shrink_with_sparseness_center(positions, sizes, sparseness, padding):
-    mean = np.mean(positions, axis=0)
-    sort_indices = np.argsort(np.linalg.norm(positions - mean, axis=1))
-
-    denseness = 1 - sparseness
-    if denseness == 0.0:
-        return positions
-
-    # go from nearer to farther images
-    for i in sort_indices:
-        pos = copy(positions[i])
-
-        for alpha in np.linspace(denseness, 0.0, int(denseness * 100) - 1):
-            new_pos = pos - alpha * (pos - mean)
-
-            positions[i] = new_pos
-
-            if not overlap(positions, sizes, padding, [i]):
-                break
-            else:
-                positions[i] = pos
 
     return positions
 
