@@ -2,7 +2,7 @@ import helper
 import compute
 
 
-def main(dataset_number=4, sparseness=0.0, image_size=500, padding=5):
+def main(dataset_number=9, sparseness=0.0, image_size=500, padding=5):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
@@ -62,7 +62,8 @@ def main(dataset_number=4, sparseness=0.0, image_size=500, padding=5):
     positions = compute.shrink_inter2(positions, sizes, representative, labels, padding)
     dists.append(compute.get_distances(positions))
 
-    helper.plot(imgs, positions, sizes)
+    im = helper.plot(imgs, positions, sizes)
+    im.save('../img.png')
     # helper.plot_clusters(em_2d, cluster_centers, labels, representative)
 
     print()

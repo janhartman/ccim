@@ -20,10 +20,12 @@ def mds(embeddings, init=None):
 
 
 def k_means(em_2d, k_default=None):
-    k_max = k_default if k_default else 10
-    km_all = [KMeans(n_clusters=k).fit(em_2d) for k in range(2, k_max + 1)]
-    ss = [silhouette_score(em_2d, km.labels_) for km in km_all]
-    km_best = km_all[np.argmax(ss)]
+    if k_default:
+        km_best = KMeans(n_clusters=k_default).fit(em_2d)
+    else:
+        km_all = [KMeans(n_clusters=k).fit(em_2d) for k in range(2, 11)]
+        ss = [silhouette_score(em_2d, km.labels_) for km in km_all]
+        km_best = km_all[np.argmax(ss)]
     return km_best.cluster_centers_, km_best.labels_
 
 

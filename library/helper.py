@@ -14,7 +14,8 @@ datasets = {
     5: 'yplp',
     6: 'caltech_100',
     7: 'mnist_100',
-    8: 'yplp-big'
+    8: 'yplp-big',
+    9: 'animals-demo'
 }
 
 
@@ -69,3 +70,4 @@ def plot(image_file_paths, positions, sizes, border=15):
         resized_image.close()
 
     vis.show()
+    return vis

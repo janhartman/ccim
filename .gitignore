@@ -2,6 +2,9 @@
 .vscode
 .idea
 
+# Image output
+img.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
