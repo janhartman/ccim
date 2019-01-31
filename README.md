@@ -1,2 +1,3 @@
-# imgs
-Image visualization experiment
+# Construction of Conceptual Image Maps
+
+The abundance of biomedical images requires tools to organize and mine image sets. A possible starting point for image analytics is a bird's-eye view of all images arranged in a map so that similar images appear close together. Here we report on the algorithm to construct image maps and its image layout optimization procedure. The algorithm starts with a feature-based characterization of images from deep embedding and visualizes images in a non-overlapping map. We propose a heuristic algorithm for image positioning, construction of a non-overlapping display, and a procedure that determines the size of an image in the visualization. The algorithm aims to position the images with similar deep embedding profiles close to each other. Because the embedding profiles encode image concepts, we refer to our proposed visualization as conceptual image maps. We demonstrate the utility of the conceptual image maps in the analysis of images from phenotyping of social amoeba and protein localization in yeast.
