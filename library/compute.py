@@ -85,9 +85,7 @@ def get_distances(mat):
 
 
 def compare_distances(dists1, dists2):
-    d = np.square(dists1 - dists2)
-    # print('\nmean, max:', np.mean(d), np.max(d))
-    return np.sum(d)
+    return np.linalg.norm(dists1 - dists2) / len(dists1)
 
 
 # indices is an array of indices which have changed - we only need to check these
@@ -167,7 +165,7 @@ def shrink_inter1(positions, sizes, representative, labels, padding):
             new_positions[cluster_indices] = new_pos
 
         if not overlap(new_positions, sizes, padding):
-            print('inter #1', alpha)
+            print('inter #1 {:.2f}'.format(alpha))
             break
 
     return new_positions
@@ -189,7 +187,7 @@ def shrink_inter2(positions, sizes, representative, labels, padding):
             new_positions[cluster_indices] = new_pos
 
             if not overlap(new_positions, sizes, padding, cluster_indices[0]):
-                print('inter #2', label, alpha)
+                print('inter #2 {} {:.2f}'.format(label, alpha))
                 break
 
         positions[cluster_indices] = new_pos

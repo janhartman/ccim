@@ -2,7 +2,7 @@ import helper
 import compute
 
 
-def main(dataset_number=9, sparseness=0.0, image_size=500, padding=5):
+def main(dataset_number=5, image_size=500, padding=5, n_clusters=None):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)
@@ -12,8 +12,12 @@ def main(dataset_number=9, sparseness=0.0, image_size=500, padding=5):
     em_2d = compute.mds(embeddings, init=compute.pca(embeddings))
 
     # Perform clustering
-    cluster_centers, labels = compute.k_means(em_2d, k_default=None)
+    cluster_centers, labels = compute.k_means(em_2d, k_default=n_clusters)
     print('clusters:', len(cluster_centers))
+    print('sizes of clusters: ', end='')
+    for l in range(max(labels) + 1):
+        print(sum(labels == l), end=', ')
+    print()
 
     # Representative images
     silhouettes = compute.get_silhouettes(em_2d, labels)
@@ -66,9 +70,11 @@ def main(dataset_number=9, sparseness=0.0, image_size=500, padding=5):
     im.save('../img.png')
     # helper.plot_clusters(em_2d, cluster_centers, labels, representative)
 
-    print()
-    for i, d in enumerate(dists[1:]):
-        print('dists', i+1, 'score:', compute.compare_distances(dists[0], d))
+    scores = list(map(lambda d: compute.compare_distances(dists[0], d), dists))
+
+    print('\nscores:')
+    for i, s in enumerate(scores[1:]):
+        print('{:.3f},'.format(s), end=' ')
 
 
 if __name__ == '__main__':

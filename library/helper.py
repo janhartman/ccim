@@ -28,7 +28,7 @@ def get_embeddings(dataset_number, image_file_paths):
     file_name = '../data/saved_embeddings/' + datasets[dataset_number] + '.npy'
 
     # read from file if it exists to save time
-    if os.path.isfile(file_name):
+    if os.path.isfile(file_name) and False:  # temporarily disable reading from cache
         return np.load(file_name)
     else:
         with ImageEmbedder(model='inception-v3', layer='penultimate') as embedder:
