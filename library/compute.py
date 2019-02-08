@@ -198,8 +198,8 @@ def shrink_inter2(positions, sizes, representative, labels, padding):
 # Move separately by x and y coordinate
 def shrink_xy(positions, sizes, representative, labels, padding, smaller=False):
     for label, rep in enumerate(representative):
-        mean = positions[rep] + sizes[rep] / 2
-        sort_indices = np.argsort(np.linalg.norm(positions + sizes / 2 - mean, axis=1))
+        pos_rep = positions[rep]
+        sort_indices = np.argsort(np.linalg.norm(positions + sizes / 2 - pos_rep, axis=1))
 
         # go from nearer to farther images
         for i in sort_indices:
@@ -209,7 +209,7 @@ def shrink_xy(positions, sizes, representative, labels, padding, smaller=False):
             pos = copy(positions[i])
 
             for alpha in np.linspace(1.0, 0.0, 101):
-                vec = - alpha * (pos - mean)
+                vec = - alpha * (pos - pos_rep)
                 positions[i] = pos + vec
 
                 if not overlap(positions, sizes, padding, [i]):
