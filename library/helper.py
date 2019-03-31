@@ -7,9 +7,9 @@ from PIL import Image
 from orangecontrib.imageanalytics.image_embedder import ImageEmbedder
 
 datasets = {
-    1: '1',
+    # 1: '1',
     2: 'traffic-signs',
-    3: 'bone-healing',
+    # 3: 'bone-healing',
     4: 'dicty-development',
     5: 'yplp',
     6: 'caltech_100',
@@ -28,7 +28,7 @@ def get_embeddings(dataset_number, image_file_paths):
     file_name = '../data/saved_embeddings/' + datasets[dataset_number] + '.npy'
 
     # read from file if it exists to save time
-    if os.path.isfile(file_name) and False:  # temporarily disable reading from cache
+    if os.path.isfile(file_name):
         return np.load(file_name)
     else:
         with ImageEmbedder(model='inception-v3', layer='penultimate') as embedder:
