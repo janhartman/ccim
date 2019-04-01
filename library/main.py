@@ -1,5 +1,5 @@
-import helper
 import compute
+import helper
 
 
 def main(dataset_number=5, image_size=500, padding=5, n_clusters=None):

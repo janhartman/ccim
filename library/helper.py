@@ -1,8 +1,8 @@
-import os
 import glob
-import numpy as np
-import matplotlib.pyplot as plt
+import os
 
+import matplotlib.pyplot as plt
+import numpy as np
 from PIL import Image
 from orangecontrib.imageanalytics.image_embedder import ImageEmbedder
 
