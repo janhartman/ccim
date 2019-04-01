@@ -69,5 +69,5 @@ def plot(image_file_paths, positions, sizes, border=15):
         image.close()
         resized_image.close()
 
-    vis.show()
+    # vis.show()
     return vis
