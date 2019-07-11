@@ -7,7 +7,7 @@
     <meta name="description" content="Survey">
     <meta name="author" content="Jan Hartman">
     <title>CCIM Survey</title>
-    <link href="/static/bootstrap.min.css" rel="stylesheet">
+    <link href="static/bootstrap.min.css" rel="stylesheet">
 
 </head>
 
@@ -22,7 +22,7 @@
                 each pair.</p>
         </div>
     </div>
-    <form action="/response" method="post">
+    <form action="response" method="post">
         {% for pair in pairs %}
         <div class="row p-5">
             <!-- Option 1 -->
@@ -31,7 +31,7 @@
                     <input class="form-check-input card-body" type="radio" name="{{ pair.id }}" id="{{ pair.id }}-1"
                            value="{{ pair.image1 }}" required>
                     <label class="form-check-label" for="{{ pair.id }}-1">
-                        <img src="/static/images/{{ pair.image1 }}" class="card-img-top border" alt="...">
+                        <img src="static/images/{{ pair.image1 }}" class="card-img-top border" alt="...">
                     </label>
                 </div>
             </div>
@@ -41,7 +41,7 @@
                     <input class="form-check-input card-body" type="radio" name="{{ pair.id }}" id="{{ pair.id }}-2"
                            value="{{ pair.image2 }}" required>
                     <label class="form-check-label" for="{{ pair.id }}-2">
-                        <img src="/static/images/{{ pair.image2 }}" class="card-img-top border" alt="...">
+                        <img src="static/images/{{ pair.image2 }}" class="card-img-top border" alt="...">
                     </label>
                 </div>
             </div>
@@ -55,8 +55,8 @@
 </div>
 
 <!-- Bootstrap core JavaScript -->
-<script src="/static/jquery.min.js"></script>
-<script src="/static/bootstrap.bundle.min.js"></script>
+<script src="static/jquery.min.js"></script>
+<script src="static/bootstrap.bundle.min.js"></script>
 
 </body>
 
