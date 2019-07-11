@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Survey">
+    <meta name="author" content="Jan Hartman">
+    <title>CCIM Survey</title>
+    <link href="/static/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<!-- Page Content -->
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <h1 class="mt-2">Construction of Conceptual Image Maps survey</h1>
+            <p class="lead">Please solve the survey and help us with our research! Choose the better looking image in
+                each pair.</p>
+        </div>
+    </div>
+    <form action="/response" method="post">
+        {% for pair in pairs %}
+        <div class="row p-5">
+            <!-- Option 1 -->
+            <div class="col-xl-6 col-md-6 mb-4">
+                <div class="text-center form-check">
+                    <input class="form-check-input card-body" type="radio" name="{{ pair.id }}" id="{{ pair.id }}-1"
+                           value="{{ pair.image1 }}" required>
+                    <label class="form-check-label" for="{{ pair.id }}-1">
+                        <img src="/static/images/{{ pair.image1 }}" class="card-img-top border" alt="...">
+                    </label>
+                </div>
+            </div>
+            <!-- Option 2 -->
+            <div class="col-xl-6 col-md-6 mb-4">
+                <div class="text-center form-check">
+                    <input class="form-check-input card-body" type="radio" name="{{ pair.id }}" id="{{ pair.id }}-2"
+                           value="{{ pair.image2 }}" required>
+                    <label class="form-check-label" for="{{ pair.id }}-2">
+                        <img src="/static/images/{{ pair.image2 }}" class="card-img-top border" alt="...">
+                    </label>
+                </div>
+            </div>
+
+        </div>
+        {% endfor %}
+        <div class="row p-5 justify-content-center">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+</div>
+
+<!-- Bootstrap core JavaScript -->
+<script src="/static/jquery.min.js"></script>
+<script src="/static/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>

@@ -69,8 +69,8 @@ def get_sizes(image_size, em_2d, ratios, centers, labels, representative):
     sizes[representative] = 1
 
     # TODO: do we want the minimum or maximum dimension to be the specified size?
-    sizes = np.stack((sizes, sizes / ratios), 1)
     sizes = np.clip(sizes * image_size, image_size / 5, None)
+    sizes = np.stack((sizes, sizes / ratios), 1)
 
     return sizes
 

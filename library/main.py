@@ -2,7 +2,7 @@ import compute
 import helper
 
 
-def main(dataset_number=14, image_size=500, padding=5, n_clusters=5):
+def main(dataset_number=10, image_size=500, padding=5, n_clusters=3):
     # Load images and get embeddings from NN
     imgs = helper.get_images(dataset_number)
     embeddings = helper.get_embeddings(dataset_number, imgs)

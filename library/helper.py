@@ -21,6 +21,7 @@ datasets = {
     12: 'houses-3',
     13: 'melanoma-2',
     14: 'purses-5',
+    15: 'plankton-4'
 }
 
 
@@ -74,5 +75,5 @@ def plot(image_file_paths, positions, sizes, border=15):
         image.close()
         resized_image.close()
 
-    vis.show()
+    # vis.show()
     return vis

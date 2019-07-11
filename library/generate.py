@@ -109,12 +109,13 @@ if __name__ == '__main__':
         'no_final': False
     }
 
-    for setting in default_settings:
+    for setting in ['default', 'shuffle', 'no_mds']:
         settings = copy(default_settings)
         settings[setting] = True
 
-        for dataset, clusters in [(2, 3), (4, 3), (5, 3), (7, None), (9, 3)]:
+        for dataset, clusters in [(2, 3), (4, 3), (5, 3), (7, 4), (9, 3), (10, 3),
+                                  (11, 4), (12, 3), (13, 2), (14, 3), (15, 4)]:
             main(SimpleNamespace(**settings),
                  dataset_number=dataset,
                  n_clusters=clusters,
-                 out_file=f'../generated/{dataset}_{setting}.png')
+                 out_file=f'../gen_survey/{dataset}_{setting}.png')
