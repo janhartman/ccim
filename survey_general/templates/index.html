@@ -8,7 +8,7 @@
     <meta name="author" content="Jan Hartman">
     <title>CCIM Survey</title>
     <link href="static/bootstrap.min.css" rel="stylesheet">
-
+    <link href="static/custom.css" rel="stylesheet">
 </head>
 
 <body>
@@ -31,7 +31,9 @@
                     <input class="form-check-input card-body" type="radio" name="{{ pair.id }}" id="{{ pair.id }}-1"
                            value="{{ pair.image1 }}" required>
                     <label class="form-check-label" for="{{ pair.id }}-1">
-                        <img src="static/images/{{ pair.image1 }}" class="card-img-top border" alt="...">
+                        <div class="p-1">
+                            <img src="static/images/{{ pair.image1 }}" class="card-img-top border" alt="...">
+                        </div>
                     </label>
                 </div>
             </div>
@@ -41,7 +43,9 @@
                     <input class="form-check-input card-body" type="radio" name="{{ pair.id }}" id="{{ pair.id }}-2"
                            value="{{ pair.image2 }}" required>
                     <label class="form-check-label" for="{{ pair.id }}-2">
-                        <img src="static/images/{{ pair.image2 }}" class="card-img-top border" alt="...">
+                        <div class="p-1">
+                            <img src="static/images/{{ pair.image2 }}" class="card-img-top border" alt="...">
+                        </div>
                     </label>
                 </div>
             </div>

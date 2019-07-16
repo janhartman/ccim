@@ -30,11 +30,11 @@ def get_images(dataset_number):
     return list(map(lambda x: x.replace('\\', '/'), image_file_paths))
 
 
-def get_embeddings(dataset_number, image_file_paths):
+def get_embeddings(dataset_number, image_file_paths, use_cached=True):
     file_name = '../data/saved_embeddings/' + datasets[dataset_number] + '.npy'
 
     # read from file if it exists to save time
-    if os.path.isfile(file_name):
+    if os.path.isfile(file_name) and use_cached:
         return np.load(file_name)
     else:
         with ImageEmbedder(model='inception-v3', layer='penultimate') as embedder:
