@@ -5,6 +5,9 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 
+# Each pair has:
+# - one image from our algorithm with all steps
+# - one image without MDS (2d positions are random), but still run through our algorithm
 pairs = []
 for s in [4, 5]:
     for id_ in range(10):
@@ -35,7 +38,7 @@ try:
 except Exception as e:
     print('Error when trying to open file for writing: ', e)
 
-# TODO save response to a file
+
 @app.route('/response', methods=['POST'])
 def response():
     winners = {}
@@ -46,6 +49,7 @@ def response():
         else:
             raise ValueError('Pair ' + pair['id'] + ' has no winner')
 
+    winners['name'] = request.form.get('name', None)
     print(winners)
     responses.append(winners)
     response_file.write(str(winners) + ', ')
