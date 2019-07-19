@@ -9,7 +9,7 @@ app = Flask(__name__)
 # - one image from our algorithm with all steps
 # - one image without MDS (2d positions are random), but still run through our algorithm
 pairs = []
-for s in [4, 5]:
+for s in [5]:
     for id_ in range(10):
         if random.randrange(2):
             im1 = f'{s}_default_{id_}.png'
